@@ -3,69 +3,13 @@ function ruleScore(text, sender = "") {
 
   let score = 0;
   let senderScore = 0;
-  // -------------------------------
-  // KEYWORDS
-  // -------------------------------
-  const suspiciousKeywords = [
-    "urgent",
-    "immediately",
-    "asap",
-    "verify",
-    "update",
-    "account",
-    "login",
-    "password",
-    "bank",
-    "invoice",
-    "payment",
-    "transfer",
-    "click",
-    "confirm",
-  ];
-
-  const sensitiveRequests = [
-    "send money",
-    "wire transfer",
-    "share credentials",
-    "provide password",
-    "verify account",
-    "reset password",
-    "sign the document",
-    "digital signature",
-    "review attached",
-    "click the link",
-    "access your portal",
-  ];
-
-  const impersonationPatterns = [
-    "ceo",
-    "manager",
-    "hr",
-    "admin",
-    "support team",
-    "finance department",
-    "human resources",
-  ];
-
-  const genericGreetings = [
-    "dear user",
-    "valued employee",
-    "team member",
-    "hi all",
-  ];
-
-  // Add this at the top of ruleScore
-  const trustedDomains = ["@yourcompany.com", "@microsoft.com", "@freecodecamp.org", "@github.com", "@google.com", "@linkedin.com"];
-  // If you have sender data, you could reduce the score if the domain is trusted.
-
-  const legitIndicators = [
-    "open enrollment",
-    "benefits guide",
-    "company policy",
-    "internal portal",
-    "employee handbook",
-    "annual review",
-  ];
+  const config = require("../config/config");
+  const suspiciousKeywords = config.suspiciousKeywords;
+  const sensitiveRequests = config.sensitiveRequests;
+  const impersonationPatterns = config.impersonationPatterns;
+  const genericGreetings = config.genericGreetings;
+  const trustedDomains = config.trustedDomains;
+  const legitIndicators = config.legitIndicators;
 
   // -------------------------------
   // COUNTS
@@ -77,28 +21,52 @@ function ruleScore(text, sender = "") {
   const impersonationHits = impersonationPatterns.filter((p) =>
     text.includes(p),
   ).length;
-  const isTrusted = (sender && typeof sender === 'string')
-    ? trustedDomains.some((domain) => sender.toLowerCase().endsWith(domain))
-    : false;
+  const isTrusted =
+    sender && typeof sender === "string"
+      ? trustedDomains.some((domain) => sender.toLowerCase().endsWith(domain))
+      : false;
   const legitHits = legitIndicators.filter((k) => text.includes(k)).length;
+  let reasons = [];
+  const companyKeywords = ["amazon", "paypal", "apple", "netflix", "microsoft"];
+
+  for (let company of companyKeywords) {
+    if (text.includes(company) && !sender.includes(company)) {
+      score += 0.4;
+      reasons.push(`Possible impersonation of ${company}`);
+    }
+  }
   // -------------------------------
   // BASE SIGNALS
   // -------------------------------
-  if (keywordHits >= 3) score += 0.25;
-  else if (keywordHits > 0) score += 0.1;
+  if (keywordHits >= 3) {
+    score += 0.25;
+    reasons.push("Multiple suspicious keywords detected");
+  } else if (keywordHits > 0) {
+    score += 0.1;
+    reasons.push("Suspicious keyword detected");
+  }
 
-  if (sensitiveHits > 0) score += 0.25;
+  if (sensitiveHits > 0) {
+    score += 0.25;
+    reasons.push("Sensitive request detected");
+  }
 
-  if (impersonationHits > 0) score += 0.2;
+  if (impersonationHits > 0 && (keywordHits > 0 || sensitiveHits > 0)) {
+    score += 0.3;
+    reasons.push("Impersonation combined with action request");
+  }
+
+  if (/bit\.ly|tinyurl/.test(text)) {
+    score += 0.25;
+    reasons.push("Shortened URL detected");
+  }
 
   // -------------------------------
   // SENDER ANALYSIS (VERY IMPORTANT 🔥)
   // -------------------------------
 
-  if (sender && typeof sender === 'string') {
+  if (sender && typeof sender === "string") {
     const lowerSender = sender.toLowerCase();
-
-    const trustedDomains = ["@yourcompany.com", "@microsoft.com", "@freecodecamp.org", "@github.com", "@google.com", "@linkedin.com"];
 
     const senderTrusted = trustedDomains.some((domain) =>
       lowerSender.endsWith(domain),
@@ -186,9 +154,9 @@ function ruleScore(text, sender = "") {
     const index = text.indexOf(word);
     if (index !== -1) {
       const nearby = text.substring(index, index + 80);
-      if (/http|www|\[link|\]/.test(nearby)) {
+      if (/http|www/.test(nearby)) {
         score += 0.3;
-        break;
+        reasons.push("Action request followed by suspicious link");
       }
     }
   }
@@ -221,7 +189,10 @@ function ruleScore(text, sender = "") {
   // -------------------------------
   // NORMALIZE
   // -------------------------------
-  return Math.min(score, 1);
+  return {
+    score: Math.min(score, 1),
+    reasons,
+  };
 }
 
 module.exports = { ruleScore };

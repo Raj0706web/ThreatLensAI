@@ -2,7 +2,7 @@
    ThreatLens AI — /analyze route
    Fuses ML scores (LSTM + TF-IDF) with Rule Engine
    and URL Checker into a single weighted verdict.
-   Weights: 0.35 LSTM | 0.30 TF-IDF | 0.15 Rule | 0.15 URL
+   Weights: 0.3 LSTM | 0.2 TF-IDF | 0.3 Rule | 0.2 URL
 ────────────────────────────────────────────── */
 
 const express = require("express");
@@ -11,6 +11,8 @@ const router = express.Router();
 const { getMLScores } = require("../services/mlService");
 const { ruleScore } = require("../services/ruleEngine");
 const { urlScore } = require("../services/urlChecker");
+const { analyzeWithAI } = require("../services/aiService");
+const config = require("../config/config");
 
 router.post("/", async (req, res) => {
   const { text, sender, url: explicitUrl } = req.body;
@@ -27,11 +29,17 @@ router.post("/", async (req, res) => {
     // -------------------------------
     // RULE + URL
     // -------------------------------
-    const rule = ruleScore(text, sender);
-    const url = urlScore(explicitUrl || text);
+    const ruleResult = ruleScore(text, sender);
+    const rule = ruleResult.score;
+    const urlResult = urlScore(text, explicitUrl);
+
+    const url = urlResult.score;
+
+    const trustedDomains = config.trustedDomains;
 
     const isTrustedSender =
-      sender && sender.toLowerCase().endsWith("@yourcompany.com");
+      sender &&
+      trustedDomains.some((domain) => sender.toLowerCase().endsWith(domain));
 
     // -------------------------------
     // LSTM CALIBRATION (IMPORTANT 🔥)
@@ -43,26 +51,12 @@ router.post("/", async (req, res) => {
     // -------------------------------
     // FINAL SCORE
     // -------------------------------
-    let finalScore = 0.35 * lstm + 0.3 * tfidf + 0.15 * rule + 0.15 * url;
-
-    finalScore = Math.min(finalScore, 1);
-
-    // Additional safety reduction
-    if (isTrustedSender && rule < 0.3 && url === 0) {
-      finalScore *= 0.7;
-    }
-
-    // -------------------------------
-    // VERDICT
-    // -------------------------------
-    let verdict = "Safe";
-    if (finalScore >= 0.8) verdict = "Phishing";
-    else if (finalScore >= 0.6) verdict = "Suspicious";
+    let finalScore = 0.3 * lstm + 0.2 * tfidf + 0.3 * rule + 0.2 * url;
 
     // -------------------------------
     // REASONS (EXPLAINABLE AI 🔥)
     // -------------------------------
-    let reasons = [];
+    let reasons = [...ruleResult.reasons, ...urlResult.reasons];
 
     if (lstm > 0.7) reasons.push("Suspicious language detected");
     if (tfidf > 0.7) reasons.push("Matches phishing patterns");
@@ -80,6 +74,44 @@ router.post("/", async (req, res) => {
     if (sender && !isTrustedSender) {
       reasons.push("Untrusted sender domain");
     }
+
+    // -------------------------------
+    // AI OVERRIDE (HIGHEST PRIORITY 🔥)
+    // -------------------------------
+    let aiResult = null;
+
+    // ⚠️ Gray zone detection
+    if (finalScore >= 0.4 && finalScore <= 0.75) {
+      try {
+        aiResult = await analyzeWithAI(text, sender);
+
+        if (aiResult) {
+          // 🔼 adjust score based on AI
+          if (aiResult.risk === "High") finalScore += 0.2;
+          else if (aiResult.risk === "Medium") finalScore += 0.1;
+          else finalScore -= 0.1;
+          // 🔥 merge AI reasons
+          if (Array.isArray(aiResult.reasons)) {
+            reasons.push(...aiResult.reasons);
+          }
+        }
+      } catch (err) {
+        console.error("AI fallback failed:", err.message);
+      }
+    }
+
+    finalScore = Math.max(0, Math.min(finalScore, 1));
+    // Additional safety reduction
+    if (isTrustedSender && rule < 0.3 && url === 0) {
+      finalScore *= 0.7;
+    }
+
+    // -------------------------------
+    // VERDICT
+    // -------------------------------
+    let verdict = "Safe";
+    if (finalScore >= 0.8) verdict = "Phishing";
+    else if (finalScore >= 0.6) verdict = "Suspicious";
 
     // -------------------------------
     // SAFE CONTEXT EXPLANATION
@@ -122,6 +154,7 @@ router.post("/", async (req, res) => {
       verdict,
       confidence: Number(finalScore.toFixed(3)),
       explanation,
+      ai_used: !!aiResult,
       details: {
         lstm: Number(lstm.toFixed(3)),
         tfidf: Number(tfidf.toFixed(3)),

@@ -249,7 +249,11 @@
         </section>
 
         <!-- RIGHT: RESULT PANEL -->
-        <section class="panel result-panel" id="resultPanel" aria-label="Analysis results">
+        <section
+          class="panel result-panel"
+          id="resultPanel"
+          aria-label="Analysis results"
+        >
           <!-- EMPTY STATE -->
           <div class="empty-state" id="emptyState">
             <div class="empty-icon">
@@ -357,6 +361,7 @@
                 <line x1="12" y1="16" x2="12.01" y2="16" />
               </svg>
               <p id="explanationText"></p>
+              <span id="aiBadge" class="ai-badge" style="display: none"></span>
             </div>
 
             <!-- SOURCE BADGE -->
@@ -440,7 +445,8 @@
           <div class="section-label">Architecture</div>
           <h2 class="how-title">How ThreatLens Works</h2>
           <p class="how-sub">
-            Four independent detection layers fused into a single weighted verdict
+            Four independent detection layers fused into a single weighted
+            verdict
           </p>
         </div>
         <div class="how-grid">

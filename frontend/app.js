@@ -6,7 +6,7 @@
 ────────────────────────────────────────────── */
 
 const BACKEND_URL = "http://localhost:5000/analyze";
-const HEALTH_URL  = "http://localhost:5000/health";
+const HEALTH_URL = "http://localhost:5000/health";
 
 const PRESETS = {
   phish: {
@@ -71,20 +71,20 @@ let isAnalyzing = false;
 let isBackendOnline = false;
 
 /* ── DOM refs ──────────────────────────────── */
-const emailBodyEl    = document.getElementById("emailBody");
-const senderInputEl  = document.getElementById("senderInput");
-const charCountEl    = document.getElementById("charCount");
-const analyzeBtnEl   = document.getElementById("analyzeBtn");
-const btnContentEl   = document.getElementById("btnContent");
-const btnLoadingEl   = document.getElementById("btnLoading");
-const statusDotEl    = document.getElementById("statusDot");
-const statusTextEl   = document.getElementById("statusText");
-const offlineNoteEl  = document.getElementById("offlineNote");
-const emptyStateEl   = document.getElementById("emptyState");
+const emailBodyEl = document.getElementById("emailBody");
+const senderInputEl = document.getElementById("senderInput");
+const charCountEl = document.getElementById("charCount");
+const analyzeBtnEl = document.getElementById("analyzeBtn");
+const btnContentEl = document.getElementById("btnContent");
+const btnLoadingEl = document.getElementById("btnLoading");
+const statusDotEl = document.getElementById("statusDot");
+const statusTextEl = document.getElementById("statusText");
+const offlineNoteEl = document.getElementById("offlineNote");
+const emptyStateEl = document.getElementById("emptyState");
 const resultContentEl = document.getElementById("resultContent");
-const bgGlowEl       = document.getElementById("bgGlow");
-const inputBadgeEl   = document.getElementById("inputBadge");
-const sourceBadgeEl  = document.getElementById("sourceBadge");
+const bgGlowEl = document.getElementById("bgGlow");
+const inputBadgeEl = document.getElementById("inputBadge");
+const sourceBadgeEl = document.getElementById("sourceBadge");
 
 /* ── Boot ──────────────────────────────────── */
 window.addEventListener("DOMContentLoaded", () => {
@@ -157,16 +157,16 @@ function loadPreset(key, btn) {
 async function runAnalysis() {
   if (isAnalyzing) return;
 
-  const text   = emailBodyEl.value.trim();
+  const text = emailBodyEl.value.trim();
   const sender = senderInputEl.value.trim();
 
   if (!text) {
     emailBodyEl.focus();
     emailBodyEl.style.borderColor = "var(--danger)";
-    emailBodyEl.style.boxShadow   = "0 0 0 3px rgba(255,76,106,0.15)";
+    emailBodyEl.style.boxShadow = "0 0 0 3px rgba(255,76,106,0.15)";
     setTimeout(() => {
       emailBodyEl.style.borderColor = "";
-      emailBodyEl.style.boxShadow   = "";
+      emailBodyEl.style.boxShadow = "";
     }, 1000);
     return;
   }
@@ -184,6 +184,11 @@ async function runAnalysis() {
 
     if (!response.ok) throw new Error("HTTP " + response.status);
     const data = await response.json();
+    if (data.verdict === "Phishing") {
+      new Audio(
+        "https://actions.google.com/sounds/v1/alarms/beep_short.ogg",
+      ).play();
+    }
     offlineNoteEl.style.display = "none";
     setStatus("online", "Backend online");
     isBackendOnline = true;
@@ -216,29 +221,54 @@ function simulateAnalysis(text, sender) {
   // Rule engine replica
   let rule = 0;
   const keywords = [
-    "urgent", "immediately", "asap", "verify", "password",
-    "login", "bank", "invoice", "click", "confirm", "transfer",
-    "account", "update",
+    "urgent",
+    "immediately",
+    "asap",
+    "verify",
+    "password",
+    "login",
+    "bank",
+    "invoice",
+    "click",
+    "confirm",
+    "transfer",
+    "account",
+    "update",
   ];
   const keyHits = keywords.filter((k) => t.includes(k)).length;
   if (keyHits >= 3) rule += 0.35;
   else if (keyHits > 0) rule += 0.15;
 
   const sensitive = [
-    "send money", "wire transfer", "verify account", "click the link",
-    "sign the document", "share credentials", "digital signature",
-    "provide password", "access your portal",
+    "send money",
+    "wire transfer",
+    "verify account",
+    "click the link",
+    "sign the document",
+    "share credentials",
+    "digital signature",
+    "provide password",
+    "access your portal",
   ];
   if (sensitive.some((p) => t.includes(p))) rule += 0.25;
 
   const impersonation = [
-    "ceo", "manager", "hr", "admin", "finance department",
-    "human resources", "support team",
+    "ceo",
+    "manager",
+    "hr",
+    "admin",
+    "finance department",
+    "human resources",
+    "support team",
   ];
   const impersonHits = impersonation.filter((p) => t.includes(p)).length;
   if (impersonHits > 0) rule += 0.2;
 
-  if (/urgent|immediately|asap|within \d+ hours|by end of day|deadline|by friday/i.test(t))
+  if (
+    /urgent|immediately|asap|within \d+ hours|by end of day|deadline|by friday/i.test(
+      t,
+    )
+  )
     rule += 0.25;
   if (/dear user|valued employee|team member|hi all/.test(t)) rule += 0.15;
   if (/bit\.ly|tinyurl|shorturl/.test(t)) rule += 0.25;
@@ -267,8 +297,12 @@ function simulateAnalysis(text, sender) {
   rule += senderScore;
 
   const legitHits = [
-    "open enrollment", "benefits guide", "company policy",
-    "internal portal", "employee handbook", "annual review",
+    "open enrollment",
+    "benefits guide",
+    "company policy",
+    "internal portal",
+    "employee handbook",
+    "annual review",
   ].filter((k) => t.includes(k)).length;
   if (trusted && rule < 0.5) rule *= 0.7;
   if (trusted && rule < 0.75) rule *= 0.85;
@@ -288,30 +322,45 @@ function simulateAnalysis(text, sender) {
   url = Math.min(url, 1);
 
   // ML proxies
-  let lstm  = Math.min(rule * 1.1  + (Math.random() * 0.08 - 0.04), 1);
+  let lstm = Math.min(rule * 1.1 + (Math.random() * 0.08 - 0.04), 1);
   let tfidf = Math.min(rule * 0.95 + (Math.random() * 0.06 - 0.03), 1);
 
   if (trusted && rule < 0.3 && url === 0) lstm = Math.min(lstm, 0.6);
 
-  let final = 0.35 * lstm + 0.3 * tfidf + 0.15 * rule + 0.15 * url;
+  let final = 0.3 * lstm + 0.2 * tfidf + 0.3 * rule + 0.2 * url;
   if (trusted && rule < 0.3 && url === 0) final *= 0.7;
-  final = Math.min(final, 1);
+  final = Math.max(0, Math.min(final, 1));
 
   let verdict = "Safe";
   if (final >= 0.75) verdict = "Phishing";
   else if (final >= 0.5) verdict = "Suspicious";
 
   const reasons = [];
-  if (lstm  > 0.7) reasons.push({ text: "Suspicious language detected", type: "neg" });
-  if (tfidf > 0.7) reasons.push({ text: "Matches phishing patterns", type: "neg" });
-  if (rule >= 0.7) reasons.push({ text: "High-risk phishing behavior detected", type: "neg" });
-  else if (rule >= 0.3) reasons.push({ text: "Suspicious behavioral patterns detected", type: "warn" });
-  if (url >= 0.3) reasons.push({ text: "Suspicious or external link detected", type: "warn" });
-  if (sender && !trusted) reasons.push({ text: "Untrusted sender domain", type: "warn" });
+  if (lstm > 0.7)
+    reasons.push({ text: "Suspicious language detected", type: "neg" });
+  if (tfidf > 0.7)
+    reasons.push({ text: "Matches phishing patterns", type: "neg" });
+  if (rule >= 0.7)
+    reasons.push({ text: "High-risk phishing behavior detected", type: "neg" });
+  else if (rule >= 0.3)
+    reasons.push({
+      text: "Suspicious behavioral patterns detected",
+      type: "warn",
+    });
+  if (url >= 0.3)
+    reasons.push({
+      text: "Suspicious or external link detected",
+      type: "warn",
+    });
+  if (sender && !trusted)
+    reasons.push({ text: "Untrusted sender domain", type: "warn" });
   if (verdict === "Safe") {
     if (trusted) reasons.push({ text: "Trusted internal sender", type: "pos" });
     if (rule < 0.3 && url === 0)
-      reasons.push({ text: "No strong phishing indicators found", type: "pos" });
+      reasons.push({
+        text: "No strong phishing indicators found",
+        type: "pos",
+      });
   }
 
   const explanation =
@@ -326,10 +375,10 @@ function simulateAnalysis(text, sender) {
     confidence: +final.toFixed(3),
     explanation,
     details: {
-      lstm:  +lstm.toFixed(3),
+      lstm: +lstm.toFixed(3),
       tfidf: +tfidf.toFixed(3),
-      rule:  +rule.toFixed(3),
-      url:   +url.toFixed(3),
+      rule: +rule.toFixed(3),
+      url: +url.toFixed(3),
     },
     reasons,
   };
@@ -337,7 +386,7 @@ function simulateAnalysis(text, sender) {
 
 /* ── Render result ──────────────────────────── */
 function renderResult(data, source) {
-  const { verdict, confidence, explanation, details, reasons } = data;
+  const { verdict, confidence, explanation, details, reasons, ai_used } = data;
   const v = verdict.toLowerCase(); // 'phishing', 'suspicious', 'safe'
 
   // Glow — use verdict name directly (CSS now matches: .bg-glow.phishing etc.)
@@ -345,10 +394,10 @@ function renderResult(data, source) {
 
   // Source badge
   if (sourceBadgeEl) {
-    sourceBadgeEl.className = "source-badge " + (source === "live" ? "live" : "offline");
-    sourceBadgeEl.textContent = source === "live"
-      ? "✦ Live ML Score"
-      : "⚡ Simulated Score";
+    sourceBadgeEl.className =
+      "source-badge " + (source === "live" ? "live" : "offline");
+    sourceBadgeEl.textContent =
+      source === "live" ? "✦ Live ML Score" : "⚡ Simulated Score";
     sourceBadgeEl.style.display = source ? "inline-flex" : "none";
   }
 
@@ -364,30 +413,33 @@ function renderResult(data, source) {
   document.getElementById("verdictLabel").textContent = verdict.toUpperCase();
 
   const subs = {
-    safe:       "No threat signals detected",
+    safe: "No threat signals detected",
     suspicious: "Verify before taking action",
-    phishing:   "High confidence threat detected",
+    phishing: "High confidence threat detected",
   };
   document.getElementById("verdictSub").textContent = subs[v];
 
   // Confidence ring
   const pct = Math.round(confidence * 100);
-  let riskText  = "LOW RISK";
-  let riskColor = "var(--safe)";
+  let riskText = "";
+  let riskColor = "";
 
   if (confidence >= 0.75) {
-    riskText  = "HIGH RISK 🚨";
+    riskText = "HIGH RISK";
     riskColor = "var(--danger)";
   } else if (confidence >= 0.5) {
-    riskText  = "MEDIUM RISK ⚠";
+    riskText = "MEDIUM RISK";
     riskColor = "var(--warn)";
+  } else {
+    riskText = "LOW RISK";
+    riskColor = "var(--safe)";
   }
 
   const riskEl = document.getElementById("riskLevel");
   riskEl.textContent = riskText;
   riskEl.style.color = riskColor;
   riskEl.style.fontFamily = "var(--mono)";
-  riskEl.style.fontSize   = "10px";
+  riskEl.style.fontSize = "10px";
   riskEl.style.fontWeight = "700";
   riskEl.style.letterSpacing = "0.06em";
   riskEl.style.marginBottom = "4px";
@@ -401,6 +453,14 @@ function renderResult(data, source) {
 
   // Explanation
   document.getElementById("explanationText").textContent = explanation;
+  const aiBadge = document.getElementById("aiBadge");
+
+  if (ai_used) {
+    aiBadge.style.display = "inline-flex";
+    aiBadge.textContent = "🤖 AI Verified";
+  } else {
+    aiBadge.style.display = "none";
+  }
 
   // Scores
   const scoreMap = { lstm: "LSTM", tfidf: "TFIDF", rule: "Rule", url: "URL" };
@@ -419,8 +479,14 @@ function renderResult(data, source) {
   // Normalise reasons — backend returns strings, simulation returns objects
   const normReasons = (reasons || []).map((r) => {
     if (typeof r === "string") {
-      const neg = ["Suspicious language", "phishing", "High-risk", "Phishing"];
-      const pos = ["Trusted", "No strong"];
+      const neg = [
+        "Suspicious",
+        "phishing",
+        "High-risk",
+        "urgent",
+        "manipulation",
+      ];
+      const pos = ["Trusted", "No strong", "safe", "legitimate"];
       const type = pos.some((p) => r.includes(p))
         ? "pos"
         : neg.some((n) => r.includes(n))
@@ -448,11 +514,14 @@ function renderResult(data, source) {
   if (normReasons.length === 0) {
     const item = document.createElement("div");
     item.className = "flag-item pos";
-    item.innerHTML = `<div class="flag-dot"></div><span>No suspicious signals detected ✅</span>`;
+    item.innerHTML = `
+      <div class="flag-dot"></div>
+      <span>No specific threat indicators found ✅</span>
+    `;
     flagsList.appendChild(item);
   }
 
   // Show result
-  emptyStateEl.style.display   = "none";
+  emptyStateEl.style.display = "none";
   resultContentEl.style.display = "flex";
 }
