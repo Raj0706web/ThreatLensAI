@@ -1,4 +1,4 @@
-import os
+import os, traceback
 from flask import Flask, request, jsonify
 import pickle
 
@@ -48,6 +48,7 @@ def predict():
         })
     except Exception as e:
         print(f"Prediction error: {e}")
+        traceback.print_exc()
         return jsonify({"lstm": 0, "tfidf": 0}), 500
 
 # -------------------------------
