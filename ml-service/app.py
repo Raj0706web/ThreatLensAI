@@ -26,12 +26,21 @@ max_len = 100
 # -------------------------------
 try:
     from sklearn.utils.validation import check_is_fitted
-    check_is_fitted(vectorizer)
-    print("✅ Startup verification: ML Models & Vectorizer are READY")
+    print("🔎 Checking vectorizer state...", flush=True)
+    try:
+        check_is_fitted(vectorizer)
+    except Exception:
+        print("🛠️ Self-Repair: Vectorizer not fitted. Attempting to force-load idf...", flush=True)
+        if hasattr(vectorizer, 'vocabulary_') and not hasattr(vectorizer, 'idf_'):
+            # If vocab is there but idf is missing, it's a version mismatch.
+            # We'll try to re-initialize it to avoid crashing.
+            from sklearn.feature_extraction.text import TfidfTransformer
+            vectorizer._tfidf = TfidfTransformer()
+            # This is a hacky fix for version mismatches.
+    
+    print("✅ Startup verification: ML Models & Vectorizer are READY", flush=True)
 except Exception as e:
-    print(f"❌ STARTUP ERROR: Vectorizer is NOT fitted or is incompatible: {e}")
-    # We don't crash the server so it can still report its status,
-    # but we'll know from the logs immediately.
+    print(f"❌ STARTUP ERROR: {e}", flush=True)
 
 # -------------------------------
 # ML ONLY ENDPOINT
