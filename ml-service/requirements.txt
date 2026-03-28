@@ -1,0 +1,7 @@
+flask
+tensorflow
+pandas
+scikit-learn
+numpy
+scipy
+werkzeug

@@ -1,5 +1,5 @@
-const API_URL = "http://127.0.0.1:5000/analyze";
-const HEALTH_URL = "http://127.0.0.1:5000/health";
+const API_URL = "https://threatlensai.onrender.com/analyze";
+const HEALTH_URL = "https://threatlensai.onrender.com/health";
 
 /* ── DOM REFS ──────────────────────────────── */
 const statusDot = document.getElementById("statusDot");
@@ -108,7 +108,8 @@ function setLoading(on) {
 function renderResult(data, source = "") {
   const { verdict, confidence, source: dataSrc } = data;
   const v = verdict.toLowerCase();
-  const finalSource = source || (dataSrc === "email" ? "Email Scan" : "Website Scan");
+  const finalSource =
+    source || (dataSrc === "email" ? "Email Scan" : "Website Scan");
 
   if (finalSource) scanStatusEl.textContent = finalSource;
   verdictBadge.textContent = verdict.toUpperCase();
@@ -118,7 +119,11 @@ function renderResult(data, source = "") {
   confValue.textContent = Math.round(confidence * 100) + "%";
 
   // Match fill color to verdict
-  const colors = { safe: "#00d485", suspicious: "#ffb800", phishing: "#ff4d6a" };
+  const colors = {
+    safe: "#00d485",
+    suspicious: "#ffb800",
+    phishing: "#ff4d6a",
+  };
   confFill.style.background = colors[v] || "var(--accent)";
   confFill.style.width = Math.round(confidence * 100) + "%";
 }

@@ -5,7 +5,7 @@
   "description": "Real-time phishing detection for websites and emails",
   "permissions": ["activeTab", "scripting", "storage"],
   "host_permissions": [
-    "http://localhost:5000/*",
+    "https://threatlensai.onrender.com/*",
     "https://mail.google.com/*",
     "<all_urls>"
   ],

@@ -3,7 +3,7 @@
    Service worker with caching and badge updates.
 ────────────────────────────────────────────── */
 
-const ANALYZE_URL = "http://127.0.0.1:5000/analyze";
+const ANALYZE_URL = "https://threatlensai.onrender.com/analyze";
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -14,12 +14,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 async function handleScan(payload, msgSender) {
   const { text, source, url, sender } = payload;
-  
+
   // 1. Generate Cache Key
   // Site scans use the URL as key, email scans use a text hash
   const isUrl = source === "url";
   const cacheKey = isUrl ? `url_${url}` : `email_${btoa(text.slice(0, 100))}`;
-  
+
   const cached = await chrome.storage.local.get(cacheKey);
 
   if (cached[cacheKey]) {
@@ -38,26 +38,25 @@ async function handleScan(payload, msgSender) {
     const res = await fetch(ANALYZE_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        text, 
+      body: JSON.stringify({
+        text,
         sender: sender || `extension_${source}`,
-        url: url 
-      })
+        url: url,
+      }),
     });
 
     if (!res.ok) throw new Error("Backend offline");
 
     const data = await res.json();
-    
+
     // 3. Store in cache
     await chrome.storage.local.set({
-      [cacheKey]: { timestamp: Date.now(), data }
+      [cacheKey]: { timestamp: Date.now(), data },
     });
 
     // 4. Update UI
     sendResult(data, sender, source);
     updateBadge(data.verdict);
-
   } catch (err) {
     console.error("ThreatLens BG Error:", err);
     if (sender.tab && sender.tab.id) {
@@ -68,9 +67,9 @@ async function handleScan(payload, msgSender) {
 
 function sendResult(data, sender, source) {
   if (sender.tab && sender.tab.id) {
-    chrome.tabs.sendMessage(sender.tab.id, { 
-      type: "RESULT", 
-      data: { ...data, source } 
+    chrome.tabs.sendMessage(sender.tab.id, {
+      type: "RESULT",
+      data: { ...data, source },
     });
   }
 }
