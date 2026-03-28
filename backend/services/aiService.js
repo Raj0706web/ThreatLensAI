@@ -1,10 +1,19 @@
 const OpenAI = require("openai");
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Initialize client only if key exists to prevent startup crash
+const apiKey = process.env.OPENAI_API_KEY;
+let client = null;
+
+if (apiKey) {
+  client = new OpenAI({ apiKey });
+} else {
+  console.warn("⚠️ OPENAI_API_KEY is missing. AI analysis will be skipped.");
+}
 
 async function analyzeWithAI(text, sender) {
+  // If no client (missing key), exit early without crashing
+  if (!client) return null;
+
   try {
     const prompt = `
 You are a cybersecurity expert.

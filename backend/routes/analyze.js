@@ -56,14 +56,9 @@ router.post("/", async (req, res) => {
     }
 
     // -------------------------------
-    // FINAL SCORE (0.3 LSTM | 0.2 TF-IDF | 0.3 Rule | 0.2 URL)
+    // 1. INITIAL BASE SCORE (0.3 LSTM | 0.2 TF-IDF | 0.3 Rule | 0.2 URL)
     // -------------------------------
     let finalScore = 0.3 * lstm + 0.2 * tfidf + 0.3 * rule + 0.2 * url;
-
-    // 🚨 HARD SAFETY CHECK: If components are high, don't let a missing AI score hide the threat
-    if (rule >= 0.8 || url >= 0.7) {
-      finalScore = Math.max(finalScore, 0.82); // Force "Phishing" verdict
-    }
 
     // -------------------------------
     // REASONS (EXPLAINABLE AI 🔥)
@@ -113,9 +108,12 @@ router.post("/", async (req, res) => {
     }
 
     finalScore = Math.max(0, Math.min(finalScore, 1));
-    // Additional safety reduction
-    if (isTrustedSender && rule < 0.3 && url === 0) {
-      finalScore *= 0.7;
+
+    // 🚨 HARD SAFETY CHECK (移至末尾): Ensure high rule/url scores ALWAYS trigger phishing
+    // This overrides any "trusted sender" or "ai fallback" reductions.
+    if (rule >= 0.8 || url >= 0.7) {
+      console.log("🔥 Safety Check Engaged: High Rule/URL detected");
+      finalScore = Math.max(finalScore, 0.85);
     }
 
     // -------------------------------
