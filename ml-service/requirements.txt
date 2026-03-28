@@ -5,4 +5,4 @@ gunicorn
 numpy
 scipy
 werkzeug
-scikit-learn==1.4.2
+scikit-learn==1.5.1
