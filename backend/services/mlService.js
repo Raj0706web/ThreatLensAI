@@ -2,16 +2,25 @@ const axios = require("axios");
 
 async function getMLScores(text) {
   try {
-    const res = await axios.post(
-      "https://threatlensai-1.onrender.com/predict",
-      { text },
-    );
-
-    return res.data; // lstm + tfidf
+    return await callML(text);
   } catch (err) {
-    console.error("ML Service Error:", err.message);
-    throw new Error("ML_SERVICE_DOWN");
+    console.warn("⚠️ First ML attempt failed, retrying...");
+
+    try {
+      return await callML(text);
+    } catch (err2) {
+      console.error("❌ ML completely failed");
+      return null; // IMPORTANT
+    }
   }
 }
 
+async function callML(text) {
+  const res = await axios.post(
+    "https://threatlensai-1.onrender.com/predict",
+    { text },
+    { timeout: 20000 },
+  );
+  return res.data;
+}
 module.exports = { getMLScores };

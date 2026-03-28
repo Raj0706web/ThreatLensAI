@@ -23,8 +23,15 @@ router.post("/", async (req, res) => {
     // -------------------------------
     const ml = await getMLScores(text);
 
-    let lstm = ml.lstm || 0;
-    const tfidf = ml.tfidf || 0;
+    let lstm = 0;
+    let tfidf = 0;
+
+    if (ml) {
+      lstm = ml.lstm || 0;
+      tfidf = ml.tfidf || 0;
+    } else {
+      console.warn("⚠️ ML unavailable — relying on rules");
+    }
 
     // -------------------------------
     // RULE + URL
@@ -49,9 +56,14 @@ router.post("/", async (req, res) => {
     }
 
     // -------------------------------
-    // FINAL SCORE
+    // FINAL SCORE (0.3 LSTM | 0.2 TF-IDF | 0.3 Rule | 0.2 URL)
     // -------------------------------
     let finalScore = 0.3 * lstm + 0.2 * tfidf + 0.3 * rule + 0.2 * url;
+
+    // 🚨 HARD SAFETY CHECK: If components are high, don't let a missing AI score hide the threat
+    if (rule >= 0.8 || url >= 0.7) {
+      finalScore = Math.max(finalScore, 0.82); // Force "Phishing" verdict
+    }
 
     // -------------------------------
     // REASONS (EXPLAINABLE AI 🔥)
