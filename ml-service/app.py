@@ -26,21 +26,20 @@ max_len = 100
 # -------------------------------
 try:
     from sklearn.utils.validation import check_is_fitted
-    print("🔎 Checking vectorizer state...", flush=True)
+    print(f"🔎 Vectorizer Type: {type(vectorizer)}", flush=True)
+    print(f"🔎 Vectorizer Attributes: {dir(vectorizer)}", flush=True)
+    
     try:
         check_is_fitted(vectorizer)
-    except Exception:
-        print("🛠️ Self-Repair: Vectorizer not fitted. Attempting to force-load idf...", flush=True)
+        print("✅ Startup verification: ML Models & Vectorizer are READY", flush=True)
+    except Exception as fitted_err:
+        print(f"⚠️ Vectorizer not fitted on startup: {fitted_err}. Attempting self-repair...", flush=True)
         if hasattr(vectorizer, 'vocabulary_') and not hasattr(vectorizer, 'idf_'):
-            # If vocab is there but idf is missing, it's a version mismatch.
-            # We'll try to re-initialize it to avoid crashing.
             from sklearn.feature_extraction.text import TfidfTransformer
             vectorizer._tfidf = TfidfTransformer()
-            # This is a hacky fix for version mismatches.
-    
-    print("✅ Startup verification: ML Models & Vectorizer are READY", flush=True)
+            print("🛠️ Self-Repair: Injected TfidfTransformer placeholder", flush=True)
 except Exception as e:
-    print(f"❌ STARTUP ERROR: {e}", flush=True)
+    print(f"❌ STARTUP DIAGNOSTIC ERROR: {e}", flush=True)
 
 # -------------------------------
 # ML ONLY ENDPOINT
@@ -55,13 +54,21 @@ def predict():
         cleaned = clean_text(text)
 
         # LSTM
-        seq = tokenizer.texts_to_sequences([cleaned])
-        padded = pad_sequences(seq, maxlen=max_len)
-        lstm_score = float(lstm_model.predict(padded, verbose=0)[0][0]) # verbose=0 keeps logs clean
+        lstm_score = 0
+        try:
+            seq = tokenizer.texts_to_sequences([cleaned])
+            padded = pad_sequences(seq, maxlen=max_len)
+            lstm_score = float(lstm_model.predict(padded, verbose=0)[0][0])
+        except Exception as e:
+            print(f"⚠️ LSTM Prediction failed: {e}")
 
         # TF-IDF
-        tfidf_vec = vectorizer.transform([cleaned])
-        tfidf_score = float(tfidf_model.predict_proba(tfidf_vec)[0][1])
+        tfidf_score = 0
+        try:
+            tfidf_vec = vectorizer.transform([cleaned])
+            tfidf_score = float(tfidf_model.predict_proba(tfidf_vec)[0][1])
+        except Exception as e:
+            print(f"⚠️ TF-IDF Prediction failed: {e}")
 
         return jsonify({
             "lstm": round(lstm_score, 3),
