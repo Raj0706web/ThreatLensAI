@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "ThreatLens AI",
+  "version": "1.0",
+  "description": "Real-time phishing detection for websites and emails",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": [
+    "http://localhost:5000/*",
+    "https://mail.google.com/*",
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "ThreatLens AI"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

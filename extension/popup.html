@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="popup-container">
+      <header class="header">
+        <div class="brand">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <ellipse cx="12" cy="12" rx="10" ry="6" />
+            <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none" />
+          </svg>
+          <span class="logo">ThreatLens<span class="ai">AI</span></span>
+        </div>
+        <div class="status-indicator">
+          <div id="statusDot" class="dot"></div>
+          <span id="statusText">...</span>
+        </div>
+      </header>
+
+      <main class="main">
+        <div id="siteCard" class="site-card">
+          <div class="site-info">
+            <span class="site-label">Current Site</span>
+            <span id="siteUrl" class="site-url noselect">Loading...</span>
+            <span id="scanStatus" class="scan-status">Waiting for scan...</span>
+          </div>
+          <div id="verdictBadge" class="badge">Checking...</div>
+        </div>
+
+        <button id="check" class="primary-btn">
+          <span id="btnText">Force Analyze</span>
+          <div id="btnLoader" class="loader hidden"></div>
+        </button>
+
+        <div id="details" class="details hidden">
+          <div class="score-row">
+            <span>Confidence</span>
+            <span id="confValue" class="value">0%</span>
+          </div>
+          <div class="progress-bar">
+            <div id="confFill" class="progress-fill"></div>
+          </div>
+        </div>
+      </main>
+
+      <footer class="footer">
+        <span>Real-time Phishing Protection Active</span>
+      </footer>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

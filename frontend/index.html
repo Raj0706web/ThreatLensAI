@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ThreatLens AI — Email Threat Detection Engine</title>
+    <meta
+      name="description"
+      content="ThreatLens AI uses a multi-model engine combining LSTM neural networks, TF-IDF classifiers, rule-based heuristics and URL reputation scoring to detect phishing emails with explainable AI verdicts."
+    />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Sora:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- BACKGROUND GRID -->
+    <div class="bg-grid"></div>
+    <div class="bg-glow" id="bgGlow"></div>
+
+    <!-- NAV -->
+    <nav class="nav" role="navigation" aria-label="Main navigation">
+      <div class="nav-inner">
+        <div class="nav-brand">
+          <div class="brand-icon">
+            <!-- ThreatLens eye/lens icon -->
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <ellipse cx="12" cy="12" rx="10" ry="6" />
+              <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none" />
+              <line x1="12" y1="6" x2="12" y2="4" stroke-width="1.5" />
+              <line x1="12" y1="18" x2="12" y2="20" stroke-width="1.5" />
+            </svg>
+          </div>
+          <span class="brand-name"
+            >ThreatLens<span class="brand-ai">AI</span></span
+          >
+        </div>
+        <div class="nav-tags">
+          <span class="tag tag-green">LSTM</span>
+          <span class="tag tag-blue">TF-IDF</span>
+          <span class="tag tag-orange">Rule Engine</span>
+          <span class="tag tag-purple">URL Check</span>
+        </div>
+        <div class="nav-status">
+          <span class="status-dot" id="statusDot"></span>
+          <span class="status-text" id="statusText">Connecting…</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- HERO -->
+    <header class="hero">
+      <div class="hero-inner">
+        <div class="hero-pill">🔍 Hackathon Edition · 2026</div>
+        <h1 class="hero-title">
+          Detect Email Threats<br />
+          <span class="hero-accent">Before They Strike</span>
+        </h1>
+        <p class="hero-sub">
+          Multi-model AI engine combining LSTM neural networks, TF-IDF pattern
+          matching, rule-based heuristics &amp; URL reputation scoring into one
+          explainable threat verdict.
+        </p>
+
+        <!-- STATS ROW -->
+        <div class="stats-row">
+          <div class="stat">
+            <span class="stat-num">4</span>
+            <span class="stat-label">Detection Signals</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat">
+            <span class="stat-num">~92%</span>
+            <span class="stat-label">Accuracy</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat">
+            <span class="stat-num">&lt;200ms</span>
+            <span class="stat-label">Response Time</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat">
+            <span class="stat-num">XAI</span>
+            <span class="stat-label">Explainable</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN ANALYZER -->
+    <main class="main" id="analyzer">
+      <div class="analyzer-grid">
+        <!-- LEFT: INPUT PANEL -->
+        <section class="panel input-panel" aria-label="Email input">
+          <div class="panel-header">
+            <div class="panel-title-row">
+              <div class="panel-icon panel-icon--input">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  width="16"
+                  height="16"
+                >
+                  <path
+                    d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+                  />
+                  <polyline points="22,6 12,13 2,6" />
+                </svg>
+              </div>
+              <span class="panel-title">Email Input</span>
+            </div>
+            <div class="panel-badge" id="inputBadge">Ready</div>
+          </div>
+
+          <div class="panel-body">
+            <!-- PRESETS -->
+            <div class="field-group">
+              <label class="field-label">Quick test samples</label>
+              <div class="preset-grid">
+                <button
+                  class="preset-card preset-danger"
+                  id="presetPhish"
+                  data-preset="phish"
+                  onclick="loadPreset('phish', this)"
+                >
+                  <span class="preset-icon">☠</span>
+                  <span class="preset-name">Phishing</span>
+                  <span class="preset-desc">Classic attack</span>
+                </button>
+                <button
+                  class="preset-card preset-warn"
+                  id="presetSuspicious"
+                  data-preset="suspicious"
+                  onclick="loadPreset('suspicious', this)"
+                >
+                  <span class="preset-icon">⚠</span>
+                  <span class="preset-name">Suspicious</span>
+                  <span class="preset-desc">Invoice scam</span>
+                </button>
+                <button
+                  class="preset-card preset-safe"
+                  id="presetSafe"
+                  data-preset="safe"
+                  onclick="loadPreset('safe', this)"
+                >
+                  <span class="preset-icon">✓</span>
+                  <span class="preset-name">Safe</span>
+                  <span class="preset-desc">Internal email</span>
+                </button>
+                <button
+                  class="preset-card preset-url"
+                  id="presetUrl"
+                  data-preset="url"
+                  onclick="loadPreset('url', this)"
+                >
+                  <span class="preset-icon">⛓</span>
+                  <span class="preset-name">Malicious URL</span>
+                  <span class="preset-desc">Short link trap</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- SENDER -->
+            <div class="field-group">
+              <label class="field-label" for="senderInput"
+                >Sender email address</label
+              >
+              <div class="input-wrapper">
+                <svg
+                  class="input-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  width="14"
+                  height="14"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                <input
+                  type="email"
+                  id="senderInput"
+                  class="field-input"
+                  placeholder="sender@domain.com"
+                  autocomplete="off"
+                />
+              </div>
+            </div>
+
+            <!-- BODY -->
+            <div class="field-group field-group--grow">
+              <label class="field-label" for="emailBody">
+                Email body
+                <span class="char-count" id="charCount">0 chars</span>
+              </label>
+              <textarea
+                id="emailBody"
+                class="field-textarea"
+                placeholder="Paste the full email content here…&#10;&#10;ThreatLens will analyze language patterns, sender trust, URL reputation, and behavioral signals to determine if this is a phishing attempt."
+              ></textarea>
+            </div>
+
+            <!-- ANALYZE BUTTON -->
+            <button class="analyze-btn" id="analyzeBtn" onclick="runAnalysis()">
+              <span class="btn-content" id="btnContent">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  width="16"
+                  height="16"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                Scan for Threats
+              </span>
+              <span class="btn-loading" id="btnLoading" style="display: none">
+                <span class="spinner"></span>
+                Analyzing…
+              </span>
+            </button>
+
+            <p class="offline-note" id="offlineNote" style="display: none">
+              ⚡ Running in offline simulation mode — start
+              <code>node server.js</code> for live ML scores
+            </p>
+          </div>
+        </section>
+
+        <!-- RIGHT: RESULT PANEL -->
+        <section class="panel result-panel" id="resultPanel" aria-label="Analysis results">
+          <!-- EMPTY STATE -->
+          <div class="empty-state" id="emptyState">
+            <div class="empty-icon">
+              <svg
+                viewBox="0 0 80 80"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="40"
+                  cy="40"
+                  r="38"
+                  stroke="currentColor"
+                  stroke-width="1"
+                  stroke-dasharray="6 4"
+                  opacity="0.2"
+                />
+                <!-- Eye/lens shape -->
+                <ellipse
+                  cx="40"
+                  cy="40"
+                  rx="18"
+                  ry="11"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  opacity="0.25"
+                />
+                <circle
+                  cx="40"
+                  cy="40"
+                  r="5"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  opacity="0.2"
+                />
+              </svg>
+            </div>
+            <p class="empty-title">No threat scan yet</p>
+            <p class="empty-sub">
+              Enter an email or pick a sample, then click
+              <strong>Scan for Threats</strong> to see results
+            </p>
+          </div>
+
+          <!-- RESULT CONTENT -->
+          <div class="result-content" id="resultContent" style="display: none">
+            <!-- VERDICT BANNER -->
+            <div class="verdict-banner" id="verdictBanner">
+              <div class="verdict-left">
+                <div class="verdict-icon-wrap" id="verdictIconWrap"></div>
+                <div class="verdict-info">
+                  <div class="verdict-label" id="verdictLabel">PHISHING</div>
+                  <div class="verdict-sub" id="verdictSub">
+                    High confidence threat detected
+                  </div>
+                </div>
+              </div>
+              <div class="verdict-confidence">
+                <div id="riskLevel"></div>
+                <div class="conf-ring-wrap">
+                  <svg class="conf-ring" viewBox="0 0 60 60">
+                    <circle
+                      class="ring-bg"
+                      cx="30"
+                      cy="30"
+                      r="24"
+                      stroke-width="5"
+                      fill="none"
+                    />
+                    <circle
+                      class="ring-fill"
+                      id="ringFill"
+                      cx="30"
+                      cy="30"
+                      r="24"
+                      stroke-width="5"
+                      fill="none"
+                      stroke-dasharray="150.8"
+                      stroke-dashoffset="150.8"
+                      stroke-linecap="round"
+                      transform="rotate(-90 30 30)"
+                    />
+                  </svg>
+                  <div class="conf-num" id="confNum">0%</div>
+                </div>
+                <div class="conf-label">Confidence</div>
+              </div>
+            </div>
+
+            <!-- EXPLANATION -->
+            <div class="explanation-card" id="explanationCard">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                width="14"
+                height="14"
+                style="flex-shrink: 0; margin-top: 2px; opacity: 0.6"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <p id="explanationText"></p>
+            </div>
+
+            <!-- SOURCE BADGE -->
+            <div class="source-badge" id="sourceBadge"></div>
+
+            <!-- SCORES -->
+            <div class="scores-section">
+              <div class="section-label">Signal Breakdown</div>
+              <div class="scores-grid">
+                <div class="score-card" data-signal="lstm">
+                  <div class="score-top">
+                    <span class="score-name">LSTM Neural Net</span>
+                    <span class="score-pct" id="scoreLSTM">—</span>
+                  </div>
+                  <div class="score-desc">
+                    Deep learning language model trained on phishing corpora
+                  </div>
+                  <div class="score-track">
+                    <div class="score-bar" id="barLSTM"></div>
+                  </div>
+                </div>
+                <div class="score-card" data-signal="tfidf">
+                  <div class="score-top">
+                    <span class="score-name">TF-IDF Patterns</span>
+                    <span class="score-pct" id="scoreTFIDF">—</span>
+                  </div>
+                  <div class="score-desc">
+                    Term frequency matching against known phishing vocabulary
+                  </div>
+                  <div class="score-track">
+                    <div class="score-bar" id="barTFIDF"></div>
+                  </div>
+                </div>
+                <div class="score-card" data-signal="rule">
+                  <div class="score-top">
+                    <span class="score-name">Rule Engine</span>
+                    <span class="score-pct" id="scoreRule">—</span>
+                  </div>
+                  <div class="score-desc">
+                    Heuristic scoring of sender, urgency, impersonation patterns
+                  </div>
+                  <div class="score-track">
+                    <div class="score-bar" id="barRule"></div>
+                  </div>
+                </div>
+                <div class="score-card" data-signal="url">
+                  <div class="score-top">
+                    <span class="score-name">URL Reputation</span>
+                    <span class="score-pct" id="scoreURL">—</span>
+                  </div>
+                  <div class="score-desc">
+                    Link analysis — shorteners, redirects, HTTPS, domain tricks
+                  </div>
+                  <div class="score-track">
+                    <div class="score-bar" id="barURL"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- WEIGHT FORMULA -->
+            <div class="formula-row">
+              <div class="formula-label">Final Score Formula</div>
+              <code class="formula-code"
+                >0.35 × LSTM + 0.30 × TF-IDF + 0.15 × Rule + 0.15 × URL</code
+              >
+            </div>
+
+            <!-- FLAGS -->
+            <div class="flags-section">
+              <div class="section-label">Detection Flags</div>
+              <div class="flags-list" id="flagsList"></div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- HOW IT WORKS -->
+      <section class="how-section" aria-label="Architecture overview">
+        <div class="how-header">
+          <div class="section-label">Architecture</div>
+          <h2 class="how-title">How ThreatLens Works</h2>
+          <p class="how-sub">
+            Four independent detection layers fused into a single weighted verdict
+          </p>
+        </div>
+        <div class="how-grid">
+          <div class="how-card">
+            <div class="how-num">01</div>
+            <div class="how-icon">🧠</div>
+            <h3>LSTM Neural Net</h3>
+            <p>
+              A bidirectional LSTM model trained on thousands of phishing and
+              legitimate emails detects subtle language manipulation patterns
+              invisible to rule-based systems.
+            </p>
+          </div>
+          <div class="how-card">
+            <div class="how-num">02</div>
+            <div class="how-icon">📊</div>
+            <h3>TF-IDF Classifier</h3>
+            <p>
+              Term Frequency–Inverse Document Frequency vectorization maps the
+              email against a phishing vocabulary corpus, catching keyword-based
+              attacks and pattern clusters.
+            </p>
+          </div>
+          <div class="how-card">
+            <div class="how-num">03</div>
+            <div class="how-icon">⚙️</div>
+            <h3>Rule Engine</h3>
+            <p>
+              Expert heuristics flag urgency language, impersonation signals
+              (CEO, HR, Finance), action-link proximity, trusted domain
+              calibration, and generic greetings.
+            </p>
+          </div>
+          <div class="how-card">
+            <div class="how-num">04</div>
+            <div class="how-icon">🔗</div>
+            <h3>URL Reputation</h3>
+            <p>
+              Extracts all links from the email body and scores each against
+              known shorteners, suspicious TLDs, missing HTTPS, embedded
+              @-signs, and SharePoint auth tricks.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer" role="contentinfo">
+      <div class="footer-inner">
+        <span class="footer-brand">ThreatLens AI</span>
+        <span class="footer-sep">·</span>
+        <span class="footer-note">Built for Hackathon 2026</span>
+        <span class="footer-sep">·</span>
+        <span class="footer-stack"
+          >Express · LSTM · TF-IDF · Chrome Extension</span
+        >
+        <span class="footer-sep footer-end-sep">·</span>
+        <span class="footer-note">Powered by Flask ML Service</span>
+      </div>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
