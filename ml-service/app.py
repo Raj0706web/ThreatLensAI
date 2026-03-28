@@ -12,7 +12,7 @@ app = Flask(__name__)
 # -------------------------------
 # LOAD MODELS
 # -------------------------------
-# 🔥 FIX 1: compile=False saves memory and fixes version mismatch errors
+print("🔄 Loading models...")
 lstm_model = load_model("models/lstm_model.h5", compile=False)
 tokenizer = pickle.load(open("models/tokenizer.pkl", "rb"))
 
@@ -20,6 +20,18 @@ tfidf_model = pickle.load(open("models/tfidf_model.pkl", "rb"))
 vectorizer = pickle.load(open("models/tfidf_vectorizer.pkl", "rb"))
 
 max_len = 100
+
+# -------------------------------
+# STARTUP VERIFICATION 🔥
+# -------------------------------
+try:
+    from sklearn.utils.validation import check_is_fitted
+    check_is_fitted(vectorizer)
+    print("✅ Startup verification: ML Models & Vectorizer are READY")
+except Exception as e:
+    print(f"❌ STARTUP ERROR: Vectorizer is NOT fitted or is incompatible: {e}")
+    # We don't crash the server so it can still report its status,
+    # but we'll know from the logs immediately.
 
 # -------------------------------
 # ML ONLY ENDPOINT
