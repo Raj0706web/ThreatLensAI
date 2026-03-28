@@ -1,6 +1,6 @@
 /* ──────────────────────────────────────────────
    ThreatLens AI — Express Backend
-   Port: 5000  |  ML Service: localhost:8000
+   Port: 5000  |  ML Service: threatlensai-1.onrender.com
 ────────────────────────────────────────────── */
 
 const express = require("express");
@@ -41,8 +41,19 @@ app.use((req, res) => {
 /* ── Start ────────────────────────────────── */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log("🔍 ThreatLens AI — Server running on http://127.0.0.1:" + PORT);
-  console.log("   Frontend UI:       http://127.0.0.1:" + PORT);
-  console.log("   Health check:      http://127.0.0.1:" + PORT + "/health");
-  console.log("   ML Service needed: http://127.0.0.1:8000/predict");
+  console.log(
+    "🔍 ThreatLens AI — Server running on https://threatlensai.onrender.com:" +
+      PORT,
+  );
+  console.log(
+    "   Frontend UI:       https://threatlensai.onrender.com:" + PORT,
+  );
+  console.log(
+    "   Health check:      https://threatlensai.onrender.com:" +
+      PORT +
+      "/health",
+  );
+  console.log(
+    "   ML Service needed: https://threatlensai-1.onrender.com/predict",
+  );
 });

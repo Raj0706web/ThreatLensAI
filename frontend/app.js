@@ -1,12 +1,12 @@
 /* ──────────────────────────────────────────────
    ThreatLens AI — app.js
-   Connects to Express backend at localhost:5000
+   Connects to Render backend at threatlensai.onrender.com
    Falls back to client-side simulation if offline
-   ML Service (Flask) runs on localhost:8000
+   ML Service (Flask) runs on threatlensai-1.onrender.com
 ────────────────────────────────────────────── */
 
-const BACKEND_URL = "http://localhost:5000/analyze";
-const HEALTH_URL = "http://localhost:5000/health";
+const BACKEND_URL = "https://threatlensai.onrender.com/analyze";
+const HEALTH_URL = "https://threatlensai.onrender.com/health";
 
 const PRESETS = {
   phish: {
